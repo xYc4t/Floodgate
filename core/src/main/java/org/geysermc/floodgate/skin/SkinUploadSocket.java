@@ -39,7 +39,6 @@ import org.geysermc.floodgate.api.event.skin.SkinApplyEvent.SkinData;
 import org.geysermc.floodgate.api.logger.FloodgateLogger;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.floodgate.api.player.PropertyKey;
-import org.geysermc.floodgate.util.Utils;
 import org.geysermc.floodgate.util.WebsocketEventType;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -71,6 +70,15 @@ final class SkinUploadSocket extends WebSocketClient {
         this.api = api;
         this.applier = applier;
         this.logger = logger;
+    }
+
+    private FloodgatePlayer findPlayerByXuid(String xuid) {
+        for (FloodgatePlayer fp : api.getPlayers()) {
+            if (xuid.equals(fp.getXuid())) {
+                return fp;
+            }
+        }
+        return null;
     }
 
     private static URI getWebsocketUri(int id, String verifyCode) {
@@ -108,7 +116,7 @@ final class SkinUploadSocket extends WebSocketClient {
                 break;
             case SKIN_UPLOADED:
                 String xuid = message.get("xuid").getAsString();
-                FloodgatePlayer player = api.getPlayer(Utils.getJavaUuid(xuid));
+                FloodgatePlayer player = findPlayerByXuid(xuid);
                 if (player != null) {
                     if (!message.get("success").getAsBoolean()) {
                         logger.info("Failed to upload skin for {} ({})", xuid,

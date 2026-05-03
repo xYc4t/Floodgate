@@ -60,6 +60,9 @@ public final class LanguageManager {
      * @return the formatted locale
      */
     private static String formatLocale(String locale) {
+        if (locale == null || locale.isEmpty()) {
+            return "en_US";
+        }
         try {
             String[] parts = locale.toLowerCase(Locale.ROOT).split("_");
             return parts[0] + "_" + parts[1].toUpperCase(Locale.ROOT);
@@ -73,6 +76,9 @@ public final class LanguageManager {
      */
     @Inject
     private void init() {
+        // Safe default before locale files resolve (avoids null during any indirect translated logging).
+        defaultLocale = "en_US";
+
         if (!loadLocale("en_US")) {// Fallback
             logger.error("Failed to load the fallback language. This will likely cause errors!");
         }
@@ -106,22 +112,18 @@ public final class LanguageManager {
      * @return true if the locale has been found
      */
     public boolean loadLocale(String locale) {
-        String formatLocale = formatLocale(locale);
-
-        // just return if the locale has been loaded already
-        if (localeMappings.containsKey(formatLocale)) {
-            return true;
-        }
+        String formatted = formatLocale(locale);
 
         Properties properties =
-                Utils.readProperties("languages/texts/" + formatLocale + ".properties");
+                Utils.readProperties("languages/texts/" + formatted + ".properties");
 
         if (properties != null) {
-            localeMappings.put(formatLocale, properties);
+            localeMappings.put(formatted, properties);
             return true;
         }
 
-        logger.warn("Missing locale file: " + formatLocale);
+        logger.warn("Missing locale file: " + formatted);
+        localeMappings.putIfAbsent(formatted, new Properties());
         return false;
     }
 
@@ -133,7 +135,7 @@ public final class LanguageManager {
      * @return translated string or "key arg1, arg2 (etc.)" if it was not found in the given locale
      */
     public String getLogString(String key, Object... values) {
-        return getString(key, defaultLocale, values);
+        return getString(key, defaultLocale != null ? defaultLocale : "en_US", values);
     }
 
     /**
@@ -145,26 +147,30 @@ public final class LanguageManager {
      * @return translated string or "key arg1, arg2 (etc.)" if it was not found in the given locale
      */
     public String getString(String key, String locale, Object... values) {
-        Properties properties = localeMappings.get(locale);
-        String formatString = null;
+        String formatString = propertyFromLocale(key, locale);
 
-        if (properties != null) {
-            formatString = properties.getProperty(key);
+        if (formatString == null && defaultLocale != null) {
+            formatString = propertyFromLocale(key, defaultLocale);
         }
 
-        // try and get the key from the default locale
         if (formatString == null) {
-            properties = localeMappings.get(defaultLocale);
-            formatString = properties.getProperty(key);
+            formatString = propertyFromLocale(key, "en_US");
         }
 
-        // key wasn't found
         if (formatString == null) {
             return formatNotFound(key, values);
         }
 
         //todo don't use color codes in the strings
         return MessageFormat.format(formatString.replace("'", "''").replace("&", "\u00a7"), values);
+    }
+
+    private String propertyFromLocale(String key, String locale) {
+        if (locale == null) {
+            return null;
+        }
+        Properties properties = localeMappings.get(formatLocale(locale));
+        return properties != null ? properties.getProperty(key) : null;
     }
 
     /**

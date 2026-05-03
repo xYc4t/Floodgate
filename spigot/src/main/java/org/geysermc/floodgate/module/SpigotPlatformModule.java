@@ -36,6 +36,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.geysermc.floodgate.SpigotPlugin;
 import org.geysermc.floodgate.api.FloodgateApi;
+import org.geysermc.floodgate.api.SimpleFloodgateApi;
 import org.geysermc.floodgate.api.logger.FloodgateLogger;
 import org.geysermc.floodgate.inject.CommonPlatformInjector;
 import org.geysermc.floodgate.inject.spigot.SpigotInjector;
@@ -129,8 +130,8 @@ public final class SpigotPlatformModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public PluginMessageUtils pluginMessageUtils() {
-        return new SpigotPluginMessageUtils(plugin);
+    public PluginMessageUtils pluginMessageUtils(SimpleFloodgateApi api) {
+        return new SpigotPluginMessageUtils(plugin, api);
     }
 
     @Provides

@@ -11,6 +11,17 @@ username-prefix: "."
 # Should spaces be replaced with '_' in bedrock usernames?
 replace-spaces: true
 
+# When true, Bedrock players get the same UUID as vanilla Java offline mode derived from their
+# joined Floodgate username (OfflinePlayer:name) instead of the XUID-based layout. Match this,
+# offline-uuid-namespace-prefix, and username-prefix/replace-spaces across every Velocity proxy and
+# Paper backend sharing the same keys. Global linking (non-local DB) expects XUID-based ids; rely on
+# local linking if you depend on join UUIDs derived from names.
+use-offline-uuids: false
+
+# Leave empty for vanilla OfflinePlayer:name. Otherwise set exactly the prefix your server stacks
+# before the joined username when deriving UUID from name (e.g. alternate offline schemes).
+offline-uuid-namespace-prefix: ''
+
 # The default locale for Floodgate. By default, Floodgate uses the system locale
 # default-locale: en_US
 

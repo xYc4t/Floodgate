@@ -28,6 +28,7 @@ package org.geysermc.floodgate;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.handshake.HandshakeHandlers;
 import org.geysermc.floodgate.api.logger.FloodgateLogger;
 import org.geysermc.floodgate.module.PluginMessageModule;
@@ -36,6 +37,7 @@ import org.geysermc.floodgate.module.SpigotAddonModule;
 import org.geysermc.floodgate.module.SpigotCommandModule;
 import org.geysermc.floodgate.module.SpigotListenerModule;
 import org.geysermc.floodgate.module.SpigotPlatformModule;
+import org.geysermc.floodgate.placeholder.FloodgatePlaceholderExpansion;
 import org.geysermc.floodgate.util.SpigotHandshakeHandler;
 import org.geysermc.floodgate.util.SpigotProtocolSupportHandler;
 import org.geysermc.floodgate.util.SpigotProtocolSupportListener;
@@ -43,6 +45,7 @@ import org.geysermc.floodgate.util.SpigotProtocolSupportListener;
 public final class SpigotPlugin extends JavaPlugin {
     private FloodgatePlatform platform;
     private Injector injector;
+    private FloodgatePlaceholderExpansion placeholderExpansion;
 
     @Override
     public void onLoad() {
@@ -76,10 +79,21 @@ public final class SpigotPlugin extends JavaPlugin {
             injector.getInstance(SpigotProtocolSupportHandler.class);
             SpigotProtocolSupportListener.registerHack(this);
         }
+
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            placeholderExpansion =
+                    new FloodgatePlaceholderExpansion(this, injector.getInstance(FloodgateApi.class));
+            placeholderExpansion.register();
+        }
     }
 
     @Override
     public void onDisable() {
+        if (placeholderExpansion != null) {
+            placeholderExpansion.unregister();
+            placeholderExpansion = null;
+        }
+
         platform.disable();
     }
 }

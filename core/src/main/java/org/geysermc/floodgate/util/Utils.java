@@ -42,6 +42,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.geysermc.floodgate.config.FloodgateConfig;
 
 public class Utils {
     private static final Pattern NON_UNIQUE_PREFIX = Pattern.compile("^\\w{0,16}$");
@@ -93,6 +94,58 @@ public class Utils {
 
     public static UUID getJavaUuid(String xuid) {
         return getJavaUuid(Long.parseLong(xuid));
+    }
+
+    /**
+     * Offline-style Java UUID ({@link UUID#nameUUIDFromBytes(byte[])}) matching the server's
+     * {@code OfflinePlayer:&lt;name&gt;} derivation (same prefix, truncation, space replacement as
+     * Floodgate handshake).
+     */
+    public static UUID offlinePlayerUuid(String javaUsername) {
+        return UUID.nameUUIDFromBytes(
+                ("OfflinePlayer:" + javaUsername).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Name-based join UUID respecting {@link FloodgateConfig#getOfflineUuidNamespacePrefix()}: empty prefix
+     * uses {@link #offlinePlayerUuid(String)} ({@code OfflinePlayer:}); otherwise {@code prefix + username}.
+     */
+    public static UUID offlineLikeJoinUuid(FloodgateConfig config, String javaUsername) {
+        String custom = config.getOfflineUuidNamespacePrefix();
+        if (custom == null || custom.isEmpty()) {
+            return offlinePlayerUuid(javaUsername);
+        }
+        return UUID.nameUUIDFromBytes((custom + javaUsername).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** Legacy Floodgate layout: Xbox id occupies the UUID least significant bits, MSB are zero. */
+    public static boolean isLegacyXuidLayoutUuid(UUID uuid) {
+        return uuid.getMostSignificantBits() == 0L;
+    }
+
+    /**
+     * The Java username Floodgate uses for handshake (same rules as handshake handling).
+     */
+    public static String computeJavaUsername(
+            FloodgateConfig config, String bedrockUsername) {
+
+        String prefix = config.getUsernamePrefix();
+        int usernameLength =
+                Math.min(bedrockUsername.length(), Math.max(0, 16 - prefix.length()));
+        String javaUsername = prefix + bedrockUsername.substring(0, usernameLength);
+        if (config.isReplaceSpaces()) {
+            javaUsername = javaUsername.replace(" ", "_");
+        }
+        return javaUsername;
+    }
+
+    /** Java UUID for a Bedrock join: either XUID-based or offline name-based. */
+    public static UUID resolveJavaUuid(
+            FloodgateConfig config, BedrockData bedrockData, String formattedJavaUsername) {
+
+        return config.isUseOfflineUuids()
+                ? offlineLikeJoinUuid(config, formattedJavaUsername)
+                : getJavaUuid(bedrockData.getXuid());
     }
 
     public static boolean isUniquePrefix(String prefix) {

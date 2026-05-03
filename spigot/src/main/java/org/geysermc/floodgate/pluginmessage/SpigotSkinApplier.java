@@ -27,12 +27,14 @@ package org.geysermc.floodgate.pluginmessage;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.UUID;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.geysermc.floodgate.api.SimpleFloodgateApi;
 import org.geysermc.floodgate.api.event.skin.SkinApplyEvent;
 import org.geysermc.floodgate.api.event.skin.SkinApplyEvent.SkinData;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
@@ -47,6 +49,7 @@ import org.geysermc.floodgate.util.SpigotVersionSpecificMethods;
 public final class SpigotSkinApplier implements SkinApplier {
     @Inject private SpigotVersionSpecificMethods versionSpecificMethods;
     @Inject private EventBus eventBus;
+    @Inject private SimpleFloodgateApi floodgateApi;
 
     @Override
     public void applySkin(@NonNull FloodgatePlayer floodgatePlayer, @NonNull SkinData skinData, boolean internal) {
@@ -54,7 +57,12 @@ public final class SpigotSkinApplier implements SkinApplier {
     }
 
     private void applySkin0(FloodgatePlayer floodgatePlayer, SkinData skinData, boolean internal, boolean firstTry) {
-        Player player = Bukkit.getPlayer(floodgatePlayer.getCorrectUniqueId());
+        UUID resolved = floodgateApi.resolveBukkitServerUniqueId(floodgatePlayer.getCorrectUniqueId());
+        Player lookup = Bukkit.getPlayer(resolved);
+        if (lookup == null && !resolved.equals(floodgatePlayer.getCorrectUniqueId())) {
+            lookup = Bukkit.getPlayer(floodgatePlayer.getCorrectUniqueId());
+        }
+        final Player player = lookup;
 
         // player is probably not logged in yet
         if (player == null) {

@@ -31,6 +31,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.geysermc.floodgate.api.SimpleFloodgateApi;
 import org.geysermc.floodgate.api.logger.FloodgateLogger;
@@ -48,6 +49,20 @@ public final class SpigotListener implements Listener {
     @Inject private MojangUtils mojangUtils;
     @Inject private SkinApplier skinApplier;
     @Inject private FormChannel formChannel;
+
+    /**
+     * Velocity/Bungee can forward a different {@link org.bukkit.entity.Player#getUniqueId()} than the handshake
+     * UUIDs Floodgate keyed on. Mirror that session UUID at login (before {@link PlayerJoinEvent}) so lookups work
+     * for plugins that resolve during the login phase.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerLoginMirrorSessionUuid(PlayerLoginEvent event) {
+        FloodgatePlayer player = api.getPlayerIfBedrockSession(
+                event.getPlayer().getUniqueId(), event.getPlayer().getName());
+        if (player != null) {
+            api.registerMirroredSessionUuid(event.getPlayer().getUniqueId(), player);
+        }
+    }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {

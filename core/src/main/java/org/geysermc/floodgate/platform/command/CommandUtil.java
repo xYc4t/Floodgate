@@ -42,7 +42,6 @@ import org.geysermc.floodgate.platform.util.PlayerType;
 import org.geysermc.floodgate.player.UserAudience;
 import org.geysermc.floodgate.player.audience.ProfileAudience;
 import org.geysermc.floodgate.util.LanguageManager;
-import org.geysermc.floodgate.util.Utils;
 
 /**
  * An interface used across all Floodgate platforms to simple stuff in commands like kicking players
@@ -128,7 +127,7 @@ public abstract class CommandUtil {
         if (filter == ALL_PLAYERS || player instanceof String || player instanceof UUID) {
             return player;
         }
-        return (filter == ONLY_BEDROCK) == api.isFloodgateId(getUuidFromSource(player))
+        return (filter == ONLY_BEDROCK) == api.isFloodgatePlayer(getUuidFromSource(player))
                 ? player
                 : fallback;
     }
@@ -188,7 +187,7 @@ public abstract class CommandUtil {
      * Defaults to false when this platform doesn't support whitelisting.
      */
     public boolean whitelistPlayer(String xuid, String username) {
-        UUID uuid = Utils.getJavaUuid(xuid);
+        UUID uuid = api.createJavaPlayerId(Long.parseLong(xuid), username);
         return whitelistPlayer(uuid, username);
     }
 
@@ -213,7 +212,7 @@ public abstract class CommandUtil {
      * whitelisted. Defaults to false when this platform doesn't support whitelisting.
      */
     public boolean removePlayerFromWhitelist(String xuid, String username) {
-        UUID uuid = Utils.getJavaUuid(xuid);
+        UUID uuid = api.createJavaPlayerId(Long.parseLong(xuid), username);
         return removePlayerFromWhitelist(uuid, username);
     }
 

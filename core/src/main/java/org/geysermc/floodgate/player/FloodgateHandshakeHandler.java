@@ -35,6 +35,7 @@ import io.netty.util.AttributeKey;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import java.net.InetSocketAddress;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import lombok.AccessLevel;
@@ -265,8 +266,21 @@ public final class FloodgateHandshakeHandler {
         if (!api.getPlayerLink().isEnabled()) {
             return CompletableFuture.completedFuture(new ObjectObjectImmutablePair<>(data, null));
         }
-        return api.getPlayerLink().getLinkedPlayer(Utils.getJavaUuid(data.getXuid()))
-                .thenApply(link -> new ObjectObjectImmutablePair<>(data, link))
+        String javaUsername = Utils.computeJavaUsername(config, data.getUsername());
+        UUID primary = Utils.resolveJavaUuid(config, data, javaUsername);
+        UUID legacyXuidKey = Utils.getJavaUuid(data.getXuid());
+
+        return api.getPlayerLink()
+                .getLinkedPlayer(primary)
+                .thenCompose(link -> {
+                    if (link != null || primary.equals(legacyXuidKey)) {
+                        return CompletableFuture.completedFuture(
+                                new ObjectObjectImmutablePair<>(data, link));
+                    }
+                    return api.getPlayerLink()
+                            .getLinkedPlayer(legacyXuidKey)
+                            .thenApply(l -> new ObjectObjectImmutablePair<>(data, l));
+                })
                 .handle((result, error) -> {
                     if (error != null) {
                         logger.error("The player linking implementation returned an error",

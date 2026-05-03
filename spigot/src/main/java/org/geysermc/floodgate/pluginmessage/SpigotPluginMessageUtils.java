@@ -28,17 +28,28 @@ package org.geysermc.floodgate.pluginmessage;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.geysermc.floodgate.api.SimpleFloodgateApi;
 import org.geysermc.floodgate.platform.pluginmessage.PluginMessageUtils;
 
 @RequiredArgsConstructor
 public class SpigotPluginMessageUtils extends PluginMessageUtils {
     private final JavaPlugin plugin;
+    private final SimpleFloodgateApi api;
 
     @Override
     public boolean sendMessage(UUID player, String channel, byte[] data) {
+        UUID resolved = api.resolveBukkitServerUniqueId(player);
+        Player bukkitPlayer = Bukkit.getPlayer(resolved);
+        if (bukkitPlayer == null && !resolved.equals(player)) {
+            bukkitPlayer = Bukkit.getPlayer(player);
+        }
+        if (bukkitPlayer == null) {
+            return false;
+        }
         try {
-            Bukkit.getPlayer(player).sendPluginMessage(plugin, channel, data);
+            bukkitPlayer.sendPluginMessage(plugin, channel, data);
         } catch (Exception exception) {
             exception.printStackTrace();
             return false;

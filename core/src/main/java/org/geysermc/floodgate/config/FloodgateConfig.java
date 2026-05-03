@@ -43,6 +43,15 @@ public class FloodgateConfig implements GenericPostInitializeCallback<ConfigLoad
     private String usernamePrefix = "";
     private boolean replaceSpaces;
 
+    /** When true, name-based UUIDs are used instead of XUID-derived UUIDs (see {@link #offlineUuidNamespacePrefix}). */
+    private boolean useOfflineUuids;
+
+    /**
+     * Namespace prepended before the joined Floodgate username for name-UUID derivation. Leave empty for
+     * vanilla {@code OfflinePlayer:}. Set only when your server/software uses another prefix string.
+     */
+    private String offlineUuidNamespacePrefix = "";
+
     private String defaultLocale;
 
     private DisconnectMessages disconnect;
@@ -82,6 +91,10 @@ public class FloodgateConfig implements GenericPostInitializeCallback<ConfigLoad
         // Java usernames can't be longer than 16 chars
         if (usernamePrefix.length() >= 16) {
             usernamePrefix = ".";
+        }
+
+        if (offlineUuidNamespacePrefix == null) {
+            offlineUuidNamespacePrefix = "";
         }
 
         return CallbackResult.ok();

@@ -95,6 +95,10 @@ public class GlobalPlayerLinking extends CommonPlayerLink {
 
     @NonNull
     private CompletableFuture<LinkedPlayer> getLinkedPlayer0(@NonNull UUID bedrockId) {
+        // Global linking keys accounts by raw XUID; only legacy Floodgate UUID layout is valid here.
+        if (!Utils.isLegacyXuidLayoutUuid(bedrockId)) {
+            return CompletableFuture.completedFuture(null);
+        }
         return CompletableFuture.supplyAsync(
                 () -> {
                     DefaultHttpResponse response =
@@ -145,6 +149,9 @@ public class GlobalPlayerLinking extends CommonPlayerLink {
 
     @NonNull
     private CompletableFuture<Boolean> isLinkedPlayer0(@NonNull UUID bedrockId) {
+        if (!Utils.isLegacyXuidLayoutUuid(bedrockId)) {
+            return CompletableFuture.completedFuture(false);
+        }
         return CompletableFuture.supplyAsync(
                 () -> {
                     DefaultHttpResponse response =

@@ -68,6 +68,16 @@ public interface FloodgateApi {
     boolean isFloodgatePlayer(UUID uuid);
 
     /**
+     * Returns true if {@code floodgateJoinedUsername} matches a connected Bedrock session (Floodgate join name:
+     * prefix, truncation, spaces). Default implementation returns false.
+     *
+     * @param floodgateJoinedUsername the joined username used for the Bedrock session (prefix, truncation, spaces)
+     */
+    default boolean isFloodgateJoinedUsername(String floodgateJoinedUsername) {
+        return false;
+    }
+
+    /**
      * Get info about the given Bedrock player
      *
      * @param uuid the uuid of the <b>online</b> Bedrock player
@@ -76,20 +86,24 @@ public interface FloodgateApi {
     FloodgatePlayer getPlayer(UUID uuid);
 
     /**
-     * Create a valid Java player uuid of a xuid
-     *
-     * @param xuid the xuid that should be converted
-     * @return the created uuid based of the given xuid
+     * Create a valid Java player uuid from a Bedrock XUID (legacy Floodgate layout: MSB zero, XUID in LSB).
      */
     UUID createJavaPlayerId(long xuid);
 
     /**
-     * Checks if the uuid of the player has the {@link #createJavaPlayerId(long)} format. This
-     * method can't validate a linked player uuid, since that doesn't equal the format. Use
-     * {@link #isFloodgatePlayer(UUID)} if you want to include linked accounts.
+     * Compatibility for {@code use-offline-uuids}: when that mode is active, returns the name-based join UUID
+     * for the given Floodgate handshake username and ignores {@code xuid}. Otherwise equivalent to
+     * {@link #createJavaPlayerId(long)}.
      *
-     * @param uuid the uuid to check
-     * @return true if the given uuid has the correct format.
+     * @param xuid Bedrock XUID (digits)
+     * @param floodgateJoinedUsername same string the server uses for the Bedrock player (prefix, truncation, spaces)
+     */
+    UUID createJavaPlayerId(long xuid, String floodgateJoinedUsername);
+
+    /**
+     * Whether the UUID matches Floodgate's Bedrock Java identity: legacy XUID layout from
+     * {@link #createJavaPlayerId(long)}, or when {@code use-offline-uuids} is enabled, also version-3 (MD5)
+     * name-based UUIDs from the same derivation the server uses for joins.
      */
     boolean isFloodgateId(UUID uuid);
 
