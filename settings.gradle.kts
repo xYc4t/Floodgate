@@ -39,16 +39,6 @@ dependencyResolutionManagement {
 
         mavenCentral()
 
-        // PlaceholderAPI (me.clip:placeholderapi) — see https://wiki.placeholderapi.com/developers/using-placeholderapi/
-        maven("https://repo.extendedclip.com/releases/") {
-            name = "extendedclip-releases"
-            content { includeGroup("me.clip") }
-        }
-        maven("https://repo.helpch.at/releases/") {
-            name = "helpch-releases"
-            content { includeGroup("me.clip") }
-        }
-
         maven("https://jitpack.io") {
             content { includeGroupByRegex("com\\.github\\..*") }
         }

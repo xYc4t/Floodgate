@@ -40,6 +40,4 @@ object Versions {
     const val javaWebsocketVersion = "1.6.0"
 
     const val checkerQual = "3.19.0"
-
-    const val placeholderApiVersion = "2.11.6"
 }

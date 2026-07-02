@@ -22,8 +22,6 @@ dependencies {
             attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 17)
         }
     }
-
-    compileOnly("me.clip", "placeholderapi", Versions.placeholderApiVersion)
 }
 
 relocate("com.google.inject")
